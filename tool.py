@@ -40,6 +40,7 @@ class SprayTool(Tool):
         for t in traces:
             if t["tool"] == self.name and t["trace"]:
                 arcade.draw_points(t["trace"], t["color"], 5)
+
     @staticmethod
     def scatter(cx: float, cy: float, count: int = 28, radius: float = 16.0):
         pts = []
@@ -50,7 +51,6 @@ class SprayTool(Tool):
         return pts
 
 class CellTool(Tool):
-    """Pinta celdas cuadradas (lista de centros); cada trazo guarda 'size' de celda."""
     name = "CELL"
     def draw_traces(self, traces: list[dict]):
         for t in traces:
@@ -65,42 +65,19 @@ class EraserTool(Tool):
     name = "ERASER"
     def draw_traces(self, traces: list[dict]):
         return
-    @staticmethod
-    def _dist2_point_seg(px, py, ax, ay, bx, by):
-        abx = bx - ax
-        aby = by - ay
-        apx = px - ax
-        apy = py - ay
-        ab2 = abx * abx + aby * aby
-        if ab2 == 0:
-            dx = px - ax
-            dy = py - ay
-            return dx * dx + dy * dy
-        t = (apx * abx + apy * aby) / ab2
-        if t < 0.0: t = 0.0
-        elif t > 1.0: t = 1.0
-        cx = ax + t * abx
-        cy = ay + t * aby
-        dx = px - cx
-        dy = py - cy
-        return dx * dx + dy * dy
+
     def erase_at(self, traces: list[dict], x: float, y: float, radius: float = 12.0):
         r2 = radius * radius
         keep = []
         for t in traces:
             pts = t["trace"]
             hit = False
-            if len(pts) == 1:
-                dx = pts[0][0] - x
-                dy = pts[0][1] - y
-                hit = dx * dx + dy * dy <= r2
-            else:
-                for i in range(len(pts) - 1):
-                    a = pts[i]
-                    b = pts[i + 1]
-                    if self._dist2_point_seg(x, y, a[0], a[1], b[0], b[1]) <= r2:
-                        hit = True
-                        break
+            for (px, py) in pts:
+                dx = px - x
+                dy = py - y
+                if dx * dx + dy * dy <= r2:
+                    hit = True
+                    break
             if not hit:
                 keep.append(t)
         traces.clear()
